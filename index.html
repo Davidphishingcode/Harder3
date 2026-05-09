@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Artistic Fish</title>
+<style>
+html,body{
+ margin:0;
+ overflow:hidden;
+ background:#f5f5ef;
+ touch-action:none;
+}
+canvas{display:block;}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<script>
+const c=document.getElementById("c");
+const x=c.getContext("2d");
+
+function resize(){
+ c.width=innerWidth;
+ c.height=innerHeight;
+}
+resize();
+addEventListener("resize",resize);
+
+let mouse={x:innerWidth/2,y:innerHeight/2};
+
+addEventListener("mousemove",e=>{
+ mouse.x=e.clientX;
+ mouse.y=e.clientY;
+});
+
+addEventListener("touchmove",e=>{
+ mouse.x=e.touches[0].clientX;
+ mouse.y=e.touches[0].clientY;
+},{passive:false});
+
+const body=[];
+const n=80;
+
+for(let i=0;i<n;i++){
+ body.push({x:mouse.x,y:mouse.y});
+}
+
+function loop(){
+ x.clearRect(0,0,c.width,c.height);
+
+ body[0].x+=(mouse.x-body[0].x)*0.25;
+ body[0].y+=(mouse.y-body[0].y)*0.25;
+
+ for(let i=1;i<n;i++){
+   body[i].x+=(body[i-1].x-body[i].x)*0.33;
+   body[i].y+=(body[i-1].y-body[i].y)*0.33;
+ }
+
+ // soft spine
+ x.strokeStyle="rgba(80,80,80,.25)";
+ x.lineWidth=18;
+ x.beginPath();
+ x.moveTo(body[0].x,body[0].y);
+ for(let p of body)x.lineTo(p.x,p.y);
+ x.stroke();
+
+ x.strokeStyle="black";
+ x.lineWidth=3;
+ x.beginPath();
+ x.moveTo(body[0].x,body[0].y);
+ for(let p of body)x.lineTo(p.x,p.y);
+ x.stroke();
+
+ // feathers
+ for(let i=6;i<n;i+=2){
+   let p=body[i];
+   let q=body[i-1];
+
+   let dx=p.x-q.x;
+   let dy=p.y-q.y;
+   let a=Math.atan2(dy,dx);
+
+   let len=(n-i)*1.6;
+
+   for(let side of [-1,1]){
+     let px=Math.cos(a+side*Math.PI/2)*len;
+     let py=Math.sin(a+side*Math.PI/2)*len;
+
+     x.strokeStyle="rgba(0,0,0,.25)";
+     x.lineWidth=8;
+     x.beginPath();
+     x.moveTo(p.x,p.y);
+     x.quadraticCurveTo(
+       p.x+px*.6,
+       p.y+py*.6,
+       p.x+px,
+       p.y+py
+     );
+     x.stroke();
+
+     x.strokeStyle="black";
+     x.lineWidth=2;
+     x.beginPath();
+     x.moveTo(p.x,p.y);
+     x.quadraticCurveTo(
+       p.x+px*.6,
+       p.y+py*.6,
+       p.x+px,
+       p.y+py
+     );
+     x.stroke();
+   }
+ }
+
+ // head
+ x.fillStyle="black";
+ x.beginPath();
+ x.arc(body[0].x,body[0].y,10,0,Math.PI*2);
+ x.fill();
+
+ requestAnimationFrame(loop);
+}
+loop();
+</script>
+</body>
+</html>
